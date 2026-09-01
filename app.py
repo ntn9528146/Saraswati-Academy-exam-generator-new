@@ -1,19 +1,18 @@
 import streamlit as st
 import json
 import os
-import importlib
 from dotenv import load_dotenv
 
 load_dotenv()
 
 st.set_page_config(
-    page_title="School Faculty Cloud Portal",
+    page_title="School Faculty Portal",
     page_icon="🎓",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
-# ----------------- MODERN UI STYLING -----------------
+# ----------------- MODERN CSS STYLING -----------------
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
@@ -23,7 +22,7 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# ----------------- USER DATABASE -----------------
+# ----------------- TEACHER USER DATABASE -----------------
 DB_FILE = "teacher_users.json"
 DEFAULT_USERS = {
     "TCH101": {
@@ -33,7 +32,7 @@ DEFAULT_USERS = {
         "gender": "Male",
         "subject": "Computer Science & IT (083/402)",
         "phone": "+91 9876543210",
-        "email": "nitin.tripathi@school.edu.in",
+        "email": "teacher101@school.edu.in",
         "qualification": "MCA / B.Ed",
         "photo": None
     },
@@ -44,7 +43,7 @@ DEFAULT_USERS = {
         "gender": "Female",
         "subject": "Mathematics (041)",
         "phone": "+91 9876501234",
-        "email": "pooja.sharma@school.edu.in",
+        "email": "teacher102@school.edu.in",
         "qualification": "M.Sc Mathematics",
         "photo": None
     }
@@ -69,7 +68,7 @@ if "users_db" not in st.session_state:
 if "logged_in_user" not in st.session_state:
     st.session_state["logged_in_user"] = None
 
-# Default Logo Check
+# Auto Detect Logo
 DEFAULT_LOGO_FILES = ["school_logo.png", "SA-Logo.png", "logo.png", "school_logo.jpg"]
 default_logo_path = None
 for fname in DEFAULT_LOGO_FILES:
@@ -77,11 +76,11 @@ for fname in DEFAULT_LOGO_FILES:
         default_logo_path = fname
         break
 
-# Backend API Key
+# Backend API Key (Hidden from users)
 api_key = st.secrets.get("GEMINI_API_KEY", os.getenv("GEMINI_API_KEY", None))
 
 # =====================================================================
-#                          LOGIN PAGE
+#                          1. LOGIN SCREEN
 # =====================================================================
 if st.session_state["logged_in_user"] is None:
     col_l1, col_l2, col_l3 = st.columns([1, 1.8, 1])
@@ -91,7 +90,7 @@ if st.session_state["logged_in_user"] is None:
             st.image(default_logo_path, width=110)
         
         st.markdown("## 🔐 Faculty & Teacher Portal")
-        st.caption("Authorized Examination & Academic Suite")
+        st.caption("Authorized Examination & Academic Suite (Session 2026-27)")
         
         with st.form("login_form"):
             t_id = st.text_input("Teacher ID / Username", placeholder="e.g. TCH101").strip().upper()
@@ -102,19 +101,19 @@ if st.session_state["logged_in_user"] is None:
                 users = st.session_state["users_db"]
                 if t_id in users and users[t_id]["password"] == t_pwd:
                     st.session_state["logged_in_user"] = t_id
-                    st.success("✅ Login successful!")
+                    st.success("✅ Login successful! Loading...")
                     st.rerun()
                 else:
-                    st.error("❌ Invalid ID or Password.")
+                    st.error("❌ Invalid ID or Password. (Default: TCH101 / password123)")
     st.stop()
 
 # =====================================================================
-#             LOGGED-IN DASHBOARD & APP NAVIGATION
+#             2. LOGGED-IN DASHBOARD & APP NAVIGATION
 # =====================================================================
 current_user_id = st.session_state["logged_in_user"]
 user_data = st.session_state["users_db"][current_user_id]
 
-# Top Modern Navbar
+# Top Navigation Bar
 col_nav1, col_nav2 = st.columns([3, 1])
 with col_nav1:
     st.markdown(
@@ -136,7 +135,7 @@ with col_nav2:
         st.session_state["logged_in_user"] = None
         st.rerun()
 
-# ----------------- SIDEBAR: LOGO & MODULE SELECTOR -----------------
+# Sidebar Navigation
 with st.sidebar:
     st.header("🏫 Academic Tools")
     if default_logo_path:
@@ -150,7 +149,6 @@ with st.sidebar:
         logo_temp_path = "temp_logo.png"
 
     st.markdown("---")
-    # Dynamic list of modules
     active_nav = st.radio(
         "📌 Choose Work Area:",
         [
@@ -160,7 +158,9 @@ with st.sidebar:
         ]
     )
 
-# ----------------- MODULE ROUTER -----------------
+# =====================================================================
+#                        3. MODULE ROUTER
+# =====================================================================
 if active_nav == "👤 My Teacher Profile":
     st.subheader("👤 Faculty Profile Details")
     col_p1, col_p2 = st.columns([1, 2.5])
@@ -223,6 +223,5 @@ elif active_nav == "⚙️ Account & Security":
                 st.success("✅ Password successfully updated!")
 
 elif active_nav == "📝 Exam Paper Generator":
-    # Exam Generator Module ko call karein
     from modules.exam_generator import render_exam_generator
     render_exam_generator(api_key=api_key, default_logo_path=logo_temp_path, default_school_name="Saraswati Academy")
